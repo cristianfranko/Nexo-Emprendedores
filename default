@@ -1,0 +1,21 @@
+server {
+    # Configuración estándar de Azure App Service
+    listen 80;
+    listen [::]:80;
+
+    root /home/site/wwwroot/public;
+
+    index index.php index.html index.htm;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # Configuración para procesar archivos PHP
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_index index.php;
+    }
+}
