@@ -12,45 +12,46 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
-    # Permisos necesarios para el login en Azure y checkout
     permissions:
       id-token: write
       contents: read
 
     steps:
-      # 1. Descarga el código del repositorio
+      # 1. Descarga el código del repositorio Y LOS ARCHIVOS LFS
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
-      # 2. Configura la versión de PHP
+      # 2. Configura PHP
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
 
-      # 3. Instala las dependencias de Composer para producción
+      # 3. Instala dependencias de Composer
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress --no-dev --optimize-autoloader
 
-      # 4. Configura Node.js para compilar los assets
+      # 4. Configura Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '22.15.0'
-      # 5. Instala las dependencias de NPM
+          node-version: '18'
+
+      # 5. Instala dependencias de NPM
       - name: Install NPM dependencies
         run: npm install
 
-      # 6. Compila los assets para producción
+      # 6. Compila assets de frontend
       - name: Build frontend assets
         run: npm run build
       
-      # 7. Prepara el artefacto para el despliegue (comprime todo en un .zip)
+      # 7. Comprime el artefacto
       - name: Zip artifact for deployment
         run: zip -r release.zip . -x ".git/*" -x ".github/*" -x "node_modules/*"
 
-      # 8. Inicia sesión en Azure usando los secretos del repositorio
+      # 8. Inicia sesión en Azure
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -58,7 +59,7 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_66B437D6ED3A4CB3A12DE7193CA17C4E }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D7D45706807B4258938597E16819F5F1 }}
 
-      # 9. Despliega el archivo .zip en Azure App Service
+      # 9. Despliega en Azure
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         with:
